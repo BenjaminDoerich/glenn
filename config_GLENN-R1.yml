@@ -1,0 +1,98 @@
+GLENN-R1:
+  NN:
+    general:
+      mode: from_scratch
+      input_path: GLENN-R1
+      input_file: last.ckpt
+      output_path: GLENN-R1
+      checkpoint_suffix: ""
+      metadata_output_filename: GLENN-R1
+      plotting_filename_prefix: "GLENN-R1"
+      cluster: True
+      nodes: 4
+      tensorboard_logname: GLENN-R1
+    model:
+      model_name: GatedGLENN_large
+      model_type: MLP
+      init: full
+      multi_kappa: True
+      max_kappa: 110
+      seed: 3
+      block_config:
+        swiglu_variant: classical_swiglu 
+        block_dim: "same"
+        activation: silu
+        scale_mode: learned_channel
+    training:
+      precision: 32
+      benchmarking: False
+      batch_size: 2**14 
+      in_memory_samples: 2**27
+      dataset_seed: 1
+      loss_function_name: normalized_scaled_train_loss_full
+      warmup_steps: 2**10
+      warmup_factor: 0.001
+      scheduler: cosine
+      exp_steps: 49152
+      cosine_decay_steps: 2**16
+      eta_min: 1e-6
+      cooldown_steps: 2**16
+      cooldown_factor: 0.01
+      optim: Adam
+      initial_optim_lr: 0.001
+      weight_decay: 0.00003
+      initial_optim_lr_scales: 0.001
+      clean_weight_decay: False
+      validate: True
+      test_loss_function_name: normalized_test_loss_full
+      kappas_validate: [10,25,50,75,100]
+      dofs_validate: 256
+      validate_batch_size: 2**13
+      validate_every_n_epochs: 1
+      total_epochs: 20
+    plotting:
+      plotting_function_name: "abs_value_plotter_multiKappa"
+      plotting_kappas: [8,10,16,25,40,50,75,100]
+    loading_config_for_FEM:
+      kappa: [100]
+      device: 'cpu'
+
+  FEM_solver_config:
+    output_path: "GLENN-R1"    
+    use_NN_initial_guess: True
+    results_filename: GLENN-R1_kappa100
+    problem_dict:
+      geo: unit_square
+      omega_by_pi_times_ten: 19
+      circ_rad : 1.0
+      only_ord: True
+      kappa: 100
+      mag_scale: 3.0
+      H_type: 1
+      A_type : 1
+      u_type : 1
+      num_holes: 1
+    minimizer_dict:
+      grad_type: 'Sobolev'
+      conjugate: True
+      tau: 0.5
+      line_search: True
+      tol: 1e-12
+      it_num: 1000000
+      Newton: False
+      tol_Newton: 1e-10
+      step_Newton_max: 30
+      Newton_extended: True
+    spaces_config_dict:
+      Fem_type_mag: Nedelec
+      corr_div: True
+      inc_bc_div_h: False
+      inc_div: False
+      Ms_value: 1024
+      M_ref: 256
+      M_conv: [128,256]
+      degree_FEM_ord: 2
+      degree_FEM_mag: 1
+      Nedelec_kind: 1
+      use_ref: False
+      kappa_ref: kappa_ref
